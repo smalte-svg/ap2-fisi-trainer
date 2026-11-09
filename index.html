@@ -159,7 +159,7 @@ h1{font-size:24px;margin:0;line-height:1.2}h2{font-size:18px;margin:0 0 10px}
 .li .dot{width:10px;height:10px;border-radius:50%;margin-top:7px;flex:none;background:#ffffff22}
 .dot.green{background:var(--grn)}.dot.yellow{background:var(--yel)}.dot.red{background:var(--red)}
 .set{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff0d}
-.set select{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px}
+.set select{max-width:55%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px}
 .switch{width:50px;height:30px;border-radius:20px;background:#ffffff22;position:relative;transition:.2s;flex:none}
 .switch::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
 .switch.on{background:var(--acc)}.switch.on::after{left:23px}
@@ -264,7 +264,9 @@ function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Ma
 const FILTERS=[['all','Alle'],['due','⏰ Fällig'],['weak','🔴 Schwach'],['neu','★ Neu 4. Aufl.'],['marks','🔖 Gemerkt'],...[1,2,3,4,5,6,7].map(k=>[String(k),k+' · '+CAT[k]])];
 function matchF(c,f){if(f==='all')return true;if(f==='due')return isDue(c);if(f==='weak')return ['red','yellow'].includes(state[c.id]?.rating);if(f==='neu')return !!c.neu;if(f==='marks')return meta.marks.includes(c.id);return String(c.cat)===f}
 function chipRow(box,cur,onPick){box.replaceChildren();FILTERS.forEach(([k,l])=>{const b=el('button','chip'+(k===cur?' on':''),esc(l));b.onclick=()=>{onPick(k);vib(8)};box.appendChild(b)});const on=box.querySelector('.on');if(on)setTimeout(()=>on.scrollIntoView({inline:'center',block:'nearest'}),0)}
-function smartPool(f){const cs=CARDS.filter(c=>matchF(c,f));const g=[[],[],[],[],[]];cs.forEach(c=>{const s=state[c.id];if(!s)g[2].push(c);else if(isDue(c))g[s.rating==='red'?0:s.rating==='yellow'?1:3].push(c);else g[4].push(c)});g[4].sort((a,b)=>(state[a.id].due||0)-(state[b.id].due||0));return [...shuffle(g[0]),...shuffle(g[1]),...shuffle(g[2]),...shuffle(g[3]),...g[4]]}
+function smartPool(f){const cs=CARDS.filter(c=>matchF(c,f));const g=[[],[],[],[],[]];cs.forEach(c=>{const s=state[c.id];if(!s)g[2].push(c);else if(isDue(c))g[s.rating==='red'?0:s.rating==='yellow'?1:3].push(c);else g[4].push(c)});const g4=shuffle(g[4]).sort((a,b)=>(state[a.id].due||0)-(state[b.id].due||0));
+  const ord=meta.order||'smart';if(ord==='random')return shuffle(cs);if(ord==='nr')return [...cs].sort((a,b)=>(a.nr||29.5)-(b.nr||29.5));
+  return [...shuffle(g[0]),...shuffle(g[1]),...shuffle(g[2]),...shuffle(g[3]),...g4]}
 
 /* ---------- Bewertung, XP, Ziele ---------- */
 let combo=0;
@@ -433,12 +435,14 @@ function detail(c){const s=openSheet(`<div class="row" style="justify-content:sp
   s.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{rate(c.id,b.dataset.r);closeSheet();renderLibList();toast('Gespeichert')});s.querySelector('#dMark').onclick=()=>{const on=toggleMark(c.id);closeSheet();renderLibList();toast(on?'🔖 Gemerkt':'Entfernt')}}
 function renderSettings(){const p=$('#setPane');p.innerHTML=`<div class="card" style="margin-bottom:12px"><h2>Lernen</h2>
   <div class="set"><span>🎯 Tagesziel</span><select id="sGoal">${[10,15,20,30,40,60].map(n=>`<option ${n===meta.goal?'selected':''}>${n}</option>`).join('')}</select></div>
+  <div class="set"><span>🔀 Reihenfolge</span><select id="sOrd"><option value="smart" ${(meta.order||'smart')==='smart'?'selected':''}>Smart (gemischt)</option><option value="random" ${meta.order==='random'?'selected':''}>Zufällig</option><option value="nr" ${meta.order==='nr'?'selected':''}>Nach Nummer</option></select></div>
   <div class="set"><span>📳 Vibration</span><button class="switch ${meta.vib?'on':''}" id="sVib"></button></div>
   <div class="set" style="border:0"><span>❓ Anleitung</span><button class="btn" id="sOnb">Anzeigen</button></div></div>
   <div class="card" style="margin-bottom:12px"><h2>Fortschritt sichern</h2><p class="small muted">Exportiere Bewertungen, XP und Streak als Datei – z. B. für ein neues Handy.</p><div class="row"><button class="btn block" id="sExp">⬆️ Exportieren</button><button class="btn block" id="sImp">⬇️ Importieren</button></div></div>
   <div class="card" style="margin-bottom:12px"><h2>Zurücksetzen</h2><button class="btn block" id="sReset" style="color:var(--red)">Gesamten Lernstand löschen</button></div>
-  <div class="card"><h2>Über</h2><p class="small muted">${CARDS.length} Karten: alle 226 Karten der 4. Auflage (Nummern wie auf den Karten, ★ = neu) plus eine Karte, die nur in der 3. Auflage enthalten war. Antworten sind eigene Zusammenfassungen – keine offiziellen Musterlösungen.</p><p class="tiny muted">Wiederholung nach Lernstand: „nochmal“ sofort, „unsicher“ morgen, „kann ich“ nach 1 → 3 → 7 → 14 → 30 → 60 Tagen.</p></div>`;
+  <div class="card"><h2>Über</h2><p class="small muted">${CARDS.length} Karten: alle 226 Karten der 4. Auflage (Nummern wie auf den Karten, ★ = neu) plus eine Karte, die nur in der 3. Auflage enthalten war. Antworten sind eigene Zusammenfassungen – keine offiziellen Musterlösungen.</p><p class="tiny muted">Version 2.2</p><p class="tiny muted">Wiederholung nach Lernstand: „nochmal“ sofort, „unsicher“ morgen, „kann ich“ nach 1 → 3 → 7 → 14 → 30 → 60 Tagen.</p></div>`;
   $('#sGoal').onchange=e=>{meta.goal=+e.target.value;save();toast('Tagesziel: '+meta.goal)};
+  $('#sOrd').onchange=e=>{meta.order=e.target.value;save();swipeReset=true;feed.filter=null;toast('Reihenfolge: '+e.target.selectedOptions[0].text)};
   $('#sVib').onclick=e=>{meta.vib=!meta.vib;save();e.currentTarget.classList.toggle('on',meta.vib);vib(20)};
   $('#sOnb').onclick=()=>onboarding(0);$('#sExp').onclick=exportData;$('#sImp').onclick=()=>$('#importFile').click();
   $('#sReset').onclick=async()=>{if(await ask('Wirklich den gesamten Lernstand löschen?','Löschen')){state={};meta=Object.assign(meta,{xp:0,days:{},marks:[],blitzBest:0,badges:[]});save();toast('Lernstand zurückgesetzt')}}}
