@@ -1,4 +1,4 @@
-AP2 FISI Lerntrainer – Version für iPhone/iPad (Web-App)
+AP2 FISI Lerntrainer – Version 2.6 für iPhone/iPad (Web-App)
 =======================================================
 
 Die Web-App muss einmal im Internet bereitgestellt werden (kostenlos), danach
@@ -35,3 +35,13 @@ installiert man sie auf dem iPhone über Safari wie eine App.
      Die Datei kann auch in der Android-App importiert werden (und umgekehrt).
    - Quiz-Battle funktioniert zwischen iPhone und Android gemischt.
    - Vibration gibt es auf dem iPhone nicht (Apple erlaubt das Web-Apps nicht).
+
+4) Neu in Version 2.6
+   - Reiter "Prüfung" mit WiSo-Merkwissen (37 Karteikarten).
+   - Die Original-IHK-Prüfungen (Testprüfungen Teil 1/2/WiSo, WiSo-Training)
+     sind in dieser Web-Version bewusst NICHT enthalten: Sie sind urheber-
+     rechtlich geschützt und dürfen nicht öffentlich hochgeladen werden.
+     In der Android-App sind sie enthalten.
+   - Update eines bestehenden Repos: index.html und sw.js ersetzen, die
+     anderen Dateien bleiben gleich. Danach die App einmal komplett schließen
+     und neu öffnen.
