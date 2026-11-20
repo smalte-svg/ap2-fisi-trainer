@@ -1,21 +1,21 @@
-AP2 FISI Lerntrainer – Version 2.6 für iPhone/iPad (Web-App)
-=======================================================
+AP2 FISI Lerntrainer – Version 2.6.1 für iPhone/iPad (Web-App)
+=========================================================
 
 Die Web-App muss einmal im Internet bereitgestellt werden (kostenlos), danach
 installiert man sie auf dem iPhone über Safari wie eine App.
 
 1) Bereitstellen (eine Variante wählen)
 
-   A) Netlify Drop – am einfachsten, ca. 2 Minuten
-      - Am PC https://app.netlify.com/drop öffnen
-      - Kostenloses Konto anlegen bzw. anmelden (sonst wird die Seite nach kurzer Zeit gelöscht)
-      - Den kompletten Ordner "AP2-Lerntrainer" auf die Seite ziehen
-      - Du bekommst eine Adresse wie https://xyz-123.netlify.app
-
-   B) GitHub Pages
-      - Neues Repository anlegen, alle Dateien aus diesem Ordner hochladen
-      - Settings → Pages → Branch "main" / Root → Save
+   A) GitHub Pages
+      - Hochladen in 6 kleinen Schritten, siehe SO-HOCHLADEN.txt
+        (alles auf einmal scheitert im Browser mit "Commit failed")
+      - Settings → Pages → Branch "main" / Root → Save (nur beim ersten Mal)
       - Adresse: https://<dein-name>.github.io/<repository>/
+
+   B) Netlify Drop
+      - Am PC https://app.netlify.com/drop öffnen und anmelden
+      - Alle Schritt-Ordner zu einem Ordner zusammenführen und diesen
+        auf die Seite ziehen
 
    Wichtig: Die Adresse muss mit https:// beginnen, sonst funktionieren
    Offline-Modus und Installation nicht.
@@ -25,23 +25,35 @@ installiert man sie auf dem iPhone über Safari wie eine App.
    - Unten auf "Teilen" (Quadrat mit Pfeil) tippen
    - "Zum Home-Bildschirm" wählen → "Hinzufügen"
    - Ab jetzt die App immer über das Icon "AP2 Lernen" starten
+   - Nach einem Update die App einmal komplett schließen und neu öffnen
 
 3) Gut zu wissen
    - Der Lernstand wird lokal auf dem iPhone gespeichert.
    - Immer über das Home-Bildschirm-Icon starten: Safari löscht Daten von
      Webseiten, die man länger nicht besucht hat – installierte Web-Apps
      sind davon ausgenommen.
-   - Ab und zu unter Mehr → Einstellungen → Exportieren eine Sicherung anlegen.
-     Die Datei kann auch in der Android-App importiert werden (und umgekehrt).
+   - Ab und zu unter Mehr → Einstellungen → "Lernstand sichern & übertragen"
+     den Lernstand-Code kopieren und z. B. in Notizen speichern. Der Code
+     funktioniert auch in der Android-App (und umgekehrt).
    - Quiz-Battle funktioniert zwischen iPhone und Android gemischt.
    - Vibration gibt es auf dem iPhone nicht (Apple erlaubt das Web-Apps nicht).
 
-4) Neu in Version 2.6
-   - Reiter "Prüfung" mit WiSo-Merkwissen (37 Karteikarten).
-   - Die Original-IHK-Prüfungen (Testprüfungen Teil 1/2/WiSo, WiSo-Training)
-     sind in dieser Web-Version bewusst NICHT enthalten: Sie sind urheber-
-     rechtlich geschützt und dürfen nicht öffentlich hochgeladen werden.
-     In der Android-App sind sie enthalten.
-   - Update eines bestehenden Repos: index.html und sw.js ersetzen, die
-     anderen Dateien bleiben gleich. Danach die App einmal komplett schließen
-     und neu öffnen.
+4) Neu in Version 2.6.1
+   - Quiz-Battle: bis zu 100 Fragen oder "Alle"; die Anzahl wird gemerkt.
+   - Thema "8 · WiSo" in Üben, Blitz und Quiz-Battle zeigt jetzt nur
+     WiSo-Fragen (120 neue Multiple-Choice-Fragen zu den WiSo-Karten).
+     Vorher wurden dort alle Fragen gemischt angezeigt.
+   - Leere Auswahl (z. B. "Gemerkt" ohne Markierungen) wird gemeldet,
+     statt still auf alle Fragen umzuschalten.
+   - Markiert → Üben klappt schon ab einer passenden Frage.
+   - WiSo-Training: Fragen pro Runde wählbar (10, 20, 30 oder alle).
+   - Prüfungsbilder liegen jetzt in einer Datei pro Prüfung und Teil
+     (pruefungen/bilder). Eine Prüfung lädt dadurch nur noch ca. 1–2 MB
+     statt 16 MB – schneller und sparsamer auf dem iPhone.
+   - Prüfungen: abgeschnittene Texte, fehlende Antworten und überflüssige
+     Bildteile korrigiert; Aufgaben, bei denen eine Zahl einzutragen ist,
+     haben jetzt ein Eingabefeld statt Ziffern-Knöpfen.
+
+   Achtung: Die IHK-Prüfungen sind urheberrechtlich geschützt. Eine
+   GitHub-Pages-Seite ist für jeden mit dem Link erreichbar, auch wenn das
+   Repository privat ist – den Link also nicht weitergeben.
