@@ -795,7 +795,7 @@ function renderSettings(){const p=$('#setPane');p.innerHTML=`<div class="card" s
   <div class="card" style="margin-bottom:12px"><h2>💾 Lernstand sichern & übertragen</h2><p class="small muted">Mit dem Lernstand-Code nimmst du deinen Fortschritt auf ein anderes Gerät, in eine neue Version oder von Safari in die Home-Bildschirm-App mit. Beim Einfügen wird zusammengeführt – es geht nichts verloren.<br><b>Letzte Sicherung:</b> ${meta.lastBackup?new Date(meta.lastBackup).toLocaleDateString('de-DE'):'noch keine'}</p><div class="row"><button class="btn primary block" id="sCode">📋 Code erstellen</button><button class="btn block" id="sRest">📥 Code einfügen</button></div><div class="row" style="margin-top:8px"><button class="btn block" id="sExp">⬆️ Als Datei</button><button class="btn block" id="sImp">⬇️ Datei laden</button></div></div>
   <div class="card" style="margin-bottom:12px"><h2>🔒 Datenschutz</h2><p class="small muted">Keine Cookies, kein Tracking. Dein Lernstand bleibt auf diesem Gerät. Nur beim Quiz-Battle mit anderen gehen Name und Antworten über einen Spielserver.</p><div class="row"><button class="btn block" id="sPriv">Details</button><button class="btn block" id="sWipe" style="color:var(--red)">Alle Daten löschen</button></div></div>
   <div class="card" style="margin-bottom:12px"><h2>Zurücksetzen</h2><button class="btn block" id="sReset" style="color:var(--red)">Gesamten Lernstand löschen</button></div>
-  <div class="card"><h2>Über</h2><p class="small muted">${CARDS.length} Karten: alle 226 Karten der 4. Auflage (Nummern wie auf den Karten, ★ = neu) plus eine Karte, die nur in der 3. Auflage enthalten war, und ${CARDS.filter(c=>c.cat===8).length} WiSo-Merkkarten. Antworten sind eigene Zusammenfassungen – keine offiziellen Musterlösungen.</p><p class="tiny muted">Version 2.6.9 · Prüfungsmodus (Teil 1, Teil 2, WiSo), WiSo-Training, Richtig/Falsch-Zähler und Quiz-Battle-Sitzungen.</p><p class="tiny muted">Wiederholung nach Lernstand: „nochmal“ sofort, „unsicher“ morgen, „kann ich“ nach 1 → 3 → 7 → 14 → 30 → 60 Tagen.</p></div>`;
+  <div class="card"><h2>Über</h2><p class="small muted">${CARDS.length} Karten: alle 226 Karten der 4. Auflage (Nummern wie auf den Karten, ★ = neu) plus eine Karte, die nur in der 3. Auflage enthalten war, und ${CARDS.filter(c=>c.cat===8).length} WiSo-Merkkarten. Antworten sind eigene Zusammenfassungen – keine offiziellen Musterlösungen.</p><p class="tiny muted">Version 2.7.0 · Prüfungsmodus (Teil 1, Teil 2, WiSo), WiSo-Training, Richtig/Falsch-Zähler und Quiz-Battle-Sitzungen mit Wiederbeitritt.</p><p class="tiny muted">Wiederholung nach Lernstand: „nochmal“ sofort, „unsicher“ morgen, „kann ich“ nach 1 → 3 → 7 → 14 → 30 → 60 Tagen.</p></div>`;
   $('#sGoal').onchange=e=>{meta.goal=+e.target.value;save();toast('Tagesziel: '+meta.goal)};
   $('#sOrd').onchange=e=>{meta.order=e.target.value;save();swipeReset=true;feed.filter=null;toast('Reihenfolge: '+e.target.selectedOptions[0].text)};
   $('#sVib').onclick=e=>{meta.vib=!meta.vib;save();e.currentTarget.classList.toggle('on',meta.vib);vib(20)};
@@ -872,26 +872,43 @@ function myName(){return (meta.name||'').trim()||'Spieler'}
 
 // ---- Host ----
 function hostSnap(){const now=Date.now();const q=H.qi>=0&&H.qi<H.qs.length?H.qs[H.qi]:null;const rev=H.phase==='reveal';
-  const players=[...H.players.values()].sort((a,b)=>b.score-a.score).map(p=>({id:p.id,name:p.name,score:p.score,tot:p.tot||0,wins:p.wins||0,gain:p.gain||0,ok:!!p.ok,streak:p.streak||0,ans:H.phase==='q'?!!p.ans:undefined}));
+  const players=[...H.players.values()].sort((a,b)=>b.score-a.score).map(p=>({id:p.id,name:p.name,off:kOff(p),score:p.score,tot:p.tot||0,wins:p.wins||0,gain:p.gain||0,ok:!!p.ok,streak:p.streak||0,ans:H.phase==='q'?!!p.ans:undefined}));
   let dist=null;if(rev){dist=[0,0,0,0];H.players.forEach(p=>{if(p.ans)dist[p.ans.c]++})}
   const left=H.paused?H.pauseRem:Math.max(0,H.deadline-now);
   return {t:'s',code:H.code,phase:H.phase,qi:H.qi,n:H.qs.length,dur:H.dur,rem:H.phase==='q'?left:0,nx:H.phase==='reveal'?left:0,rv:H.rev,paused:!!H.paused,pv:H.pv||0,rd:H.round||0,cfg:H.cfg,
     q:q?{id:q.k.id,nr:q.k.nr,cat:q.k.cat,text:q.k.q,opts:q.opts}:null,correct:rev?q.correct:-1,dist,answered:H.phase==='q'?[...H.players.values()].filter(p=>p.ans).length:0,players,host:meta.pid}}
-function hostSend(){if(!H)return;const s=hostSnap();if(H.net)H.net.pub(BASE+H.code+'/h',s);applySnap(s)}
-function hostMsg(topic,raw){let m;try{m=JSON.parse(raw)}catch(e){return}if(!H||!m||!m.id)return;
-  if(m.t==='join'){const name=String(m.name||'Spieler').slice(0,16);if(!H.players.has(m.id)){H.players.set(m.id,{id:m.id,name,score:0,streak:0});hostSend()}else H.players.get(m.id).name=name}
+function kOff(p){return p.id!==meta.pid&&!!p.hi&&Date.now()-(p.seen||0)>8000}
+const KHKEY='ap2_kHost';
+function kSaveHost(){if(!H||H.solo||Date.now()-(H.svT||0)<3000)return;H.svT=Date.now();
+  try{localStorage.setItem(KHKEY,JSON.stringify({code:H.code,cfg:H.cfg,round:H.round||0,t:Date.now(),players:[...H.players.values(),...H.gone.values()].map(p=>({id:p.id,name:p.name,tot:p.tot||0,wins:p.wins||0}))}))}catch(e){}}
+function kHostSaved(){try{const r=JSON.parse(localStorage.getItem(KHKEY)||'null');return r&&Date.now()-r.t<3*3600e3?r:null}catch(e){return null}}
+function hostSend(){if(!H)return;kSaveHost();const s=hostSnap();if(H.net)H.net.pub(BASE+H.code+'/h',s);applySnap(s)}
+function hostMsg(topic,raw){let m;try{m=JSON.parse(raw)}catch(e){return}if(!H||!m||!m.id)return;const pp=H.players.get(m.id);if(pp)pp.seen=Date.now();
+  if(m.t==='hi'){if(pp)pp.hi=true}
+  else if(m.t==='join'){const name=String(m.name||'Spieler').slice(0,16);
+    if(H.players.has(m.id)){const p=H.players.get(m.id);p.name=name;p.seen=Date.now()}
+    else if(H.gone.has(m.id)){const p=H.gone.get(m.id);H.gone.delete(m.id);p.name=name;p.seen=Date.now();p.ans=null;H.players.set(m.id,p);toast('👋 '+name+' ist wieder da');hostSend()}
+    else{H.players.set(m.id,{id:m.id,name,score:0,streak:0,seen:Date.now()});hostSend()}}
   else if(m.t==='ans'&&H.phase==='q'&&!H.paused&&m.qi===H.qi&&(m.rd==null||m.rd===H.round)){const p=H.players.get(m.id);if(!p||p.ans)return;p.ans={c:+m.c,ms:Math.max(0,Math.min(H.dur,+m.ms||H.dur))};
-    if([...H.players.values()].every(x=>x.ans))hostReveal();else hostSend()}
-  else if(m.t==='leave'){H.players.delete(m.id);hostSend()}}
+    if([...H.players.values()].every(x=>x.ans||kOff(x)))hostReveal();else hostSend()}
+  else if(m.t==='leave'){const p=H.players.get(m.id);if(p&&m.id!==meta.pid){H.players.delete(m.id);H.gone.set(m.id,p);H.svT=0;hostSend()}}}
 async function hostCreate(opts){const cfg={filter:opts.filter||'all',n:opts.n,sec:opts.sec,rev:opts.rev||8};if(!kqFor(cfg.filter).length)return toast(noq());
-  H={code:genCode(),net:null,players:new Map(),qs:[],qi:-1,phase:'lobby',cfg,round:0,dur:cfg.sec*1000,deadline:0,solo:opts.solo,rev:cfg.rev*1000,paused:false,pauseRem:0,pv:0};
+  H={code:genCode(),net:null,players:new Map(),qs:[],qi:-1,phase:'lobby',cfg,round:0,dur:cfg.sec*1000,deadline:0,solo:opts.solo,rev:cfg.rev*1000,paused:false,pauseRem:0,pv:0,gone:new Map()};
   H.players.set(meta.pid,{id:meta.pid,name:myName(),score:0,streak:0});
+  if(opts.restore){const r=opts.restore;H.code=r.code;H.round=r.round||0;(r.players||[]).forEach(p=>{if(p.id===meta.pid)Object.assign(H.players.get(meta.pid),{tot:p.tot||0,wins:p.wins||0});else H.players.set(p.id,{id:p.id,name:p.name,score:0,streak:0,tot:p.tot||0,wins:p.wins||0,hi:true,seen:0})})}
   G={role:'host',code:H.code,snap:null,answered:-1,solo:opts.solo,lastSeen:Date.now()};
   if(!opts.solo){renderKMsg('🔌 Verbinde mit dem Spielserver …');const net=new Mqtt(hostMsg,()=>toast('⚠️ Verbindung unterbrochen – verbinde neu …')||reconnect(net));
     if(!await net.connect()){H=null;G=null;return renderKMsg('❌ Keine Verbindung zum Spielserver. Prüfe die Internetverbindung und versuche es erneut.',true)}
     H.net=net;net.sub(BASE+H.code+'/p');H.hb=setInterval(hostSend,1500)}
   hostSend();if(opts.solo)hostStart()}
-async function reconnect(net){for(let i=0;i<5&&!net.closed;i++){await new Promise(r=>setTimeout(r,1500*(i+1)));if(await net.connect()){net.subs.splice(0).forEach(t=>net.sub(t));toast('✅ Wieder verbunden');return}}}
+async function reconnect(net){if(!net||net.busy||net.closed)return;net.busy=true;
+  for(let i=0;!net.closed;i++){await new Promise(r=>setTimeout(r,Math.min(1500*(i+1),8000)));if(net.closed)break;
+    if(await net.connect()){net.subs.splice(0).forEach(t=>net.sub(t));toast('✅ Wieder verbunden');if(G)G.lastSeen=Date.now();break}}
+  net.busy=false}
+// App kommt aus dem Hintergrund zurück (iPhone schließt dann oft die Verbindung): sofort prüfen und neu verbinden
+function kWake(){if(document.hidden)return;[G&&G.net,H&&H.net].forEach(n=>{if(!n||n.closed||n.busy)return;
+  const stale=G&&G.role==='player'&&Date.now()-G.lastSeen>6000;if(!n.ws||n.ws.readyState>1)reconnect(n);else if(stale){try{n.ws.close()}catch(e){}}})}
+document.addEventListener('visibilitychange',kWake);window.addEventListener('online',kWake);
 function hostStart(){if(!H||(H.phase!=='lobby'&&H.phase!=='end'))return;const c=H.cfg;const pool=kqFor(c.filter);if(!pool.length)return toast('Für diese Auswahl gibt es keine Quizfragen – wähle andere Kategorien');
   const k=shuffle(pool).slice(0,c.n||pool.length);H.qs=k.map(it=>{const o=kqOpts(it);return{k:it,opts:o,correct:o.indexOf(it.a)}});
   H.dur=c.sec*1000;H.rev=c.rev*1000;H.round=(H.round||0)+1;H.qi=-1;H.paused=false;H.players.forEach(p=>{p.score=0;p.streak=0;p.gain=0;p.ok=false;p.ans=null});hostNext()}
@@ -909,19 +926,19 @@ function hostReveal(){if(!H||H.phase!=='q')return;H.paused=false;const q=H.qs[H.
   H.players.forEach(p=>{const ok=!!p.ans&&p.ans.c===q.correct;p.ok=ok;p.streak=ok?(p.streak||0)+1:0;p.gain=ok?Math.round(1000*(1-(p.ans.ms/H.dur)/2))+Math.min((p.streak-1)*100,500):0;p.score+=p.gain});
   H.phase='reveal';H.deadline=Date.now()+H.rev;hostSend();clearInterval(H.tick);H.tick=setInterval(hostTick,250)}
 function quitGame(){if(G&&G.role==='player'&&G.net){G.net.pub(BASE+G.code+'/p',{t:'leave',id:meta.pid})}
-  if(H){clearInterval(H.hb);clearInterval(H.tick);if(H.net){try{H.net.pub(BASE+H.code+'/h',{t:'s',code:H.code,phase:'closed'})}catch(e){}H.net.close()}H=null}if(G){clearInterval(G.hb);clearInterval(G.tm);G.net&&G.net.close();G=null}renderQuizMenu()}
+  if(H){clearInterval(H.hb);clearInterval(H.tick);if(!H.solo)try{localStorage.removeItem(KHKEY)}catch(e){}if(H.net){try{H.net.pub(BASE+H.code+'/h',{t:'s',code:H.code,phase:'closed'})}catch(e){}H.net.close()}H=null}if(G){clearInterval(G.hb);clearInterval(G.tm);G.net&&G.net.close();G=null}renderQuizMenu()}
 
 // ---- Spieler ----
 async function joinGame(code){code=code.toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length!==6)return toast('Der Code hat 6 Zeichen');
   G={role:'player',code,snap:null,answered:-1,lastSeen:Date.now()};renderKMsg('🔌 Verbinde mit Spiel '+code+' …');
-  const net=new Mqtt((t,raw)=>{let s;try{s=JSON.parse(raw)}catch(e){return}if(s&&s.t==='s'&&G&&s.code===G.code){G.lastSeen=Date.now();if(s.phase==='closed')return kClosed();applySnap(s)}},()=>{toast('⚠️ Verbindung unterbrochen – verbinde neu …');reconnect(net)});
+  const net=new Mqtt((t,raw)=>{let s;try{s=JSON.parse(raw)}catch(e){return}if(s&&s.t==='s'&&G&&s.code===G.code){G.lastSeen=Date.now();if(s.phase==='closed')return kClosed();if(!G.snap){meta.kLast={code:G.code,t:Date.now()};save()}applySnap(s)}},()=>{toast('⚠️ Verbindung unterbrochen – verbinde neu …');reconnect(net)});
   if(!await net.connect()){G=null;return renderKMsg('❌ Keine Verbindung zum Spielserver. Prüfe die Internetverbindung.',true)}
   if(!G)return net.close();G.net=net;net.sub(BASE+code+'/h');
-  const hello=()=>{if(!G)return;const inList=G.snap&&G.snap.players.some(p=>p.id===meta.pid);if(!inList)net.pub(BASE+code+'/p',{t:'join',id:meta.pid,name:myName()});
+  const hello=()=>{if(!G)return;const inList=G.snap&&G.snap.players.some(p=>p.id===meta.pid);if(G.net&&G.net.ws)net.pub(BASE+code+'/p',inList?{t:'hi',id:meta.pid}:{t:'join',id:meta.pid,name:myName()});
     if(!G.snap&&Date.now()-G.lastSeen>9000)renderKMsg('⏳ Spiel '+code+' noch nicht gefunden … Ist der Code richtig und der Host online?',true,true);
-    if(G.snap&&G.snap.phase!=='end'&&Date.now()-G.lastSeen>10000)renderKMsg('📡 Keine Daten vom Host seit 10 Sekunden …',true,true)};
+    if(G.snap&&G.snap.phase!=='end'&&Date.now()-G.lastSeen>10000)renderKMsg('📡 Verbindung zum Spiel unterbrochen – es wird automatisch neu verbunden … Deine Punkte bleiben erhalten.',true,true)};
   hello();G.hb=setInterval(hello,2000)}
-function kClosed(){if(!G)return;clearInterval(G.hb);clearInterval(G.tm);const n=G.net;G=null;if(n)n.close();renderKMsg('👋 Der Host hat die Sitzung beendet.',true)}
+function kClosed(){if(!G)return;delete meta.kLast;save();clearInterval(G.hb);clearInterval(G.tm);const n=G.net;G=null;if(n)n.close();renderKMsg('👋 Der Host hat die Sitzung beendet.',true)}
 function sendAnswer(c){if(!G||!G.snap||G.snap.phase!=='q'||G.answered===G.snap.qi||G.snap.paused)return;const ms=Math.max(0,G.snap.dur-Math.max(0,G.deadline-Date.now()));G.answered=G.snap.qi;G.myChoice=c;vib(15);
   const m={t:'ans',id:meta.pid,qi:G.snap.qi,rd:G.snap.rd||0,c,ms};if(G.role==='host')hostMsg('',JSON.stringify(m));else{G.net.pub(BASE+G.code+'/p',m);renderQuiz()}}
 
@@ -952,22 +969,28 @@ function kSetBind(p,c,cb){const N=$('#'+p+'N');if(N)N.onchange=()=>{c.n=+N.value
     e.onchange=ap;e.onblur=ap;e.onkeydown=ev=>{if(ev.key==='Enter'){ev.preventDefault();e.blur()}}};
   num(p+'S','sec',5,300);num(p+'R','rev',2,60)}
 function kCfgSum(c){return (c.filter?fLabel(c.filter):'Alle')+' · '+(c.n||'alle')+' Fragen · '+c.sec+' s pro Frage · '+c.rev+' s Auflösung'}
-function kPlHtml(s){if(!(s.rd>0))return `<div class="badges">${s.players.map(p=>`<span class="badge got">${p.id===s.host?'👑 ':''}${esc(p.name)}</span>`).join('')}</div>`;
-  return [...s.players].sort((a,b)=>(b.tot||0)-(a.tot||0)).map((p,i)=>`<div class="krow ${p.id===meta.pid?'me':''}"><span class="kr">${i+1}</span><span style="flex:1">${p.id===s.host?'👑 ':''}${esc(p.name)}${p.wins?` <span class="tiny" style="color:var(--yel)">🏆 ${p.wins}</span>`:''}</span><b>${p.tot||0}</b></div>`).join('')}
+function kPlHtml(s){if(!(s.rd>0))return `<div class="badges">${s.players.map(p=>`<span class="badge ${p.off?'':'got'}">${p.id===s.host?'👑 ':''}${esc(p.name)}${p.off?' 📡':''}</span>`).join('')}</div>`;
+  return [...s.players].sort((a,b)=>(b.tot||0)-(a.tot||0)).map((p,i)=>`<div class="krow ${p.id===meta.pid?'me':''}"><span class="kr">${i+1}</span><span style="flex:1">${p.id===s.host?'👑 ':''}${esc(p.name)}${p.off?' <span class="tiny muted">📡 offline</span>':''}${p.wins?` <span class="tiny" style="color:var(--yel)">🏆 ${p.wins}</span>`:''}</span><b>${p.tot||0}</b></div>`).join('')}
 function kLobbyUpd(s){const pl=$('#kPl');if(pl)pl.innerHTML=kPlHtml(s);const n=$('#kPlN');if(n)n.textContent='('+s.players.length+')';const cs=$('#kCfgS');if(cs)cs.textContent=kCfgSum(s.cfg||{})}
 function kCfgBind(){if(!H)return;const c=H.cfg;const cnt=()=>{const n=kqFor(c.filter).length,e=$('#kLCnt');if(e)e.textContent=n?n+' Fragen in dieser Auswahl':'⚠️ Für diese Auswahl gibt es keine Quizfragen';const st=$('#kStart');if(st)st.disabled=!n};
   chipRow($('#kLChips'),c.filter,k=>{c.filter=k;meta.filter=k;save();cnt();hostSend()});cnt();
   kSetBind('kL',c,()=>{qSet.n=meta.qN=c.n;qSet.sec=meta.qS=c.sec;qSet.rev=meta.qR=c.rev;save();hostSend()})}
+function kResumeHtml(){const h=kHostSaved(),l=meta.kLast&&Date.now()-meta.kLast.t<3*3600e3?meta.kLast:null;if(!h&&!l)return '';
+  const ago=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'gerade eben':m<60?'vor '+m+' min':'vor '+Math.round(m/60)+' h'};
+  return `<div class="card" style="margin-bottom:12px;border-color:var(--acc)"><h2>🔄 Sitzung fortsetzen</h2><p class="tiny muted" style="margin-bottom:8px">Verbindung weg oder App geschlossen? Mit demselben Gerät kommst du zurück – deine Punkte bleiben erhalten.</p>
+   ${l&&(!h||l.t>h.t)?`<button class="btn primary block" id="kRejoin" style="flex-direction:column;gap:2px">Wieder beitreten: ${esc(l.code)} <span class="tiny" style="opacity:.8">${ago(l.t)}</span></button>`:''}
+   ${h&&(!l||h.t>=l.t)?`<button class="btn primary block" id="kRehost" style="flex-direction:column;gap:2px">Sitzung ${esc(h.code)} wieder öffnen <span class="tiny" style="opacity:.8">als Host · ${ago(h.t)}</span></button>`:''}
+   <button class="btn block" id="kResX" style="margin-top:8px">Verwerfen</button></div>`}
 function renderQuizMenu(){const b=$('#quizBody');if(G&&G.snap)return renderQuiz();
   b.innerHTML=`<div style="text-align:center;margin:6px 0 16px"><div style="font-size:54px">🎮</div><h1>Quiz-Battle</h1><p class="muted small">Multiple Choice wie bei Kahoot – allein oder mit Freunden per Sitzungscode.</p></div>
   <button class="mode" style="--g:#89b4ff;width:100%;min-height:0;margin-bottom:12px;display:flex;gap:14px;align-items:center" id="kMc"><span class="e">📝</span><span><b style="margin:0">Üben – ohne Zeitdruck</b><span>Multiple Choice wie in der Fahrschul-App, mit Erklärung</span></span></button>
   <button class="mode" style="--g:#ffcf5c;width:100%;min-height:0;margin-bottom:12px;display:flex;gap:14px;align-items:center" id="kBlitz"><span class="e">⚡</span><span><b style="margin:0">Blitz-Runde</b><span>60 Sekunden allein gegen die Uhr · Highscore ${meta.blitzBest}</span></span></button>
-  <div class="card" style="margin-bottom:12px"><label class="small muted">Dein Name</label><input class="search" id="kName" maxlength="16" value="${esc(meta.name||'')}" placeholder="z. B. ${exName()}" style="margin-top:6px"></div>
+  ${kResumeHtml()}<div class="card" style="margin-bottom:12px"><label class="small muted">Dein Name</label><input class="search" id="kName" maxlength="16" value="${esc(meta.name||'')}" placeholder="z. B. ${exName()}" style="margin-top:6px"></div>
   <div class="card" style="margin-bottom:12px"><h2>🔑 Spiel beitreten</h2><div class="row"><input class="search" id="kCode" maxlength="6" placeholder="CODE" style="text-transform:uppercase;letter-spacing:4px;font-weight:800;text-align:center;font-size:20px"><button class="btn primary" id="kJoin">Los</button></div></div>
   <div class="card" style="margin-bottom:12px"><h2>🛠️ Neues Spiel</h2><div class="tiny muted" style="margin-bottom:4px">Kategorien – mehrere antippen möglich</div><div class="chips" id="kChips" style="padding:0 0 4px"></div><div class="tiny muted" id="kCnt" style="margin-bottom:8px"></div>
    ${kSetHtml('k',qSet)}
    <div class="row" style="margin-top:10px"><button class="btn block" id="kSolo">🎯 Allein spielen</button><button class="btn primary block" id="kHost">📡 Hosten</button></div></div>
-  <p class="tiny muted">Mehrspieler braucht Internet. Alle Spieler installieren die App, der Host teilt den 6-stelligen Code. Spielt euch gegenseitig an – Punkte gibt es für richtige UND schnelle Antworten. Das Spiel läuft von selbst weiter; der Host kann jederzeit pausieren. Nach jeder Runde bleibt die Gruppe zusammen und der Host kann die Einstellungen für die nächste Runde ändern.</p><p class="kbd">Tastatur: Antworten mit 1–4 oder A–D</p>`;
+  <p class="tiny muted">Mehrspieler braucht Internet. Alle Spieler installieren die App, der Host teilt den 6-stelligen Code. Spielt euch gegenseitig an – Punkte gibt es für richtige UND schnelle Antworten. Das Spiel läuft von selbst weiter; der Host kann jederzeit pausieren. Nach jeder Runde bleibt die Gruppe zusammen und der Host kann die Einstellungen für die nächste Runde ändern. Bricht die Verbindung ab, verbindet die App automatisch neu – oder du trittst über „Sitzung fortsetzen“ wieder bei, ohne deine Punkte zu verlieren.</p><p class="kbd">Tastatur: Antworten mit 1–4 oder A–D</p>`;
   $('#kBlitz').onclick=()=>{blitzPool=null;go('blitz')};$('#kMc').onclick=()=>{mcPool=null;go('mc')};const nm=$('#kName');nm.oninput=()=>{meta.name=nm.value.trim();save()};
   const kCnt=()=>{const n=kqFor(meta.filter).length,e=$('#kCnt');if(e)e.textContent=n?n+' Fragen in dieser Auswahl':'⚠️ '+noq()};kCnt();chipRow($('#kChips'),meta.filter,function f(k){meta.filter=k;save();chipRow($('#kChips'),k,f);kCnt()});
   kSetBind('k',qSet,()=>{meta.qN=qSet.n;meta.qS=qSet.sec;meta.qR=qSet.rev;save()});
@@ -975,11 +998,14 @@ function renderQuizMenu(){const b=$('#quizBody');if(G&&G.snap)return renderQuiz(
   $('#kSolo').onclick=()=>{hostCreate({filter:meta.filter,n:qSet.n,sec:qSet.sec,rev:qSet.rev,solo:true})};
   $('#kHost').onclick=()=>{if(need())hostCreate({filter:meta.filter,n:qSet.n,sec:qSet.sec,rev:qSet.rev,solo:false})};
   $('#kJoin').onclick=()=>{if(need())joinGame($('#kCode').value)};
+  const rj=$('#kRejoin');if(rj)rj.onclick=()=>{if(need())joinGame(meta.kLast.code)};
+  const rh=$('#kRehost');if(rh)rh.onclick=()=>{const r=kHostSaved();if(r&&need())hostCreate({filter:r.cfg.filter,n:r.cfg.n,sec:r.cfg.sec,rev:r.cfg.rev,solo:false,restore:r})};
+  const rx=$('#kResX');if(rx)rx.onclick=()=>{delete meta.kLast;save();try{localStorage.removeItem(KHKEY)}catch(e){}renderQuizMenu()};
   $('#kCode').onkeydown=e=>{if(e.key==='Enter')$('#kJoin').click()}}
 function kTiles(s,mode){return `<div class="ktiles">${s.q.opts.map((o,i)=>{const [col,sym]=KCOL[i];let cls='kt';if(mode==='rev'){cls+=i===s.correct?' good':' dim'}else if(G.answered===s.qi){cls+=i===G.myChoice?' picked':' dim'}
   const cnt=mode==='rev'&&s.dist?`<span class="kc">${s.dist[i]}</span>`:'';return `<button class="${cls}" data-i="${i}" style="background:${col}"><span class="ks">${sym}</span><span class="kx">${esc(o)}</span>${mode==='rev'&&i===s.correct?'<span class="kc">✔</span>':cnt}</button>`}).join('')}</div>`}
 function kBoard(s,max=5){const me=s.players.findIndex(p=>p.id===meta.pid);let rows=s.players.slice(0,max).map((p,i)=>kRow(p,i));if(me>=max)rows.push('<div class="tiny muted" style="text-align:center">…</div>'+kRow(s.players[me],me));return rows.join('')}
-function kRow(p,i){return `<div class="krow ${p.id===meta.pid?'me':''}"><span class="kr">${i+1}</span><span style="flex:1">${esc(p.name)}${p.streak>=2?' <span class="tiny" style="color:var(--yel)">🔥'+p.streak+'</span>':''}</span>${p.gain?`<span class="tiny" style="color:var(--grn)">+${p.gain}</span>`:''}<b>${p.score}</b></div>`}
+function kRow(p,i){return `<div class="krow ${p.id===meta.pid?'me':''}"><span class="kr">${i+1}</span><span style="flex:1">${esc(p.name)}${p.off?' <span class="tiny muted">📡 offline</span>':''}${p.streak>=2?' <span class="tiny" style="color:var(--yel)">🔥'+p.streak+'</span>':''}</span>${p.gain?`<span class="tiny" style="color:var(--grn)">+${p.gain}</span>`:''}<b>${p.score}</b></div>`}
 function renderQuiz(){const b=$('#quizBody');if(!G||!G.snap)return renderQuizMenu();const s=G.snap;const isHost=G.role==='host';b.classList.toggle('kpaused',s.phase==='q'&&!!s.paused);
   const top=`<div class="row" style="justify-content:space-between;margin-bottom:8px"><span class="pill">${G.solo?'🎯 Solo':'🔑 '+s.code}</span>${s.phase!=='lobby'&&s.phase!=='end'?`<span class="tiny muted">Frage ${s.qi+1} / ${s.n}</span>`:''}<button class="pill" id="kQuit">✕</button></div>`;
   if(s.phase==='lobby'){const c=s.cfg||{},sess=s.rd>0;
