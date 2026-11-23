@@ -1,4 +1,4 @@
-AP2 FISI Lerntrainer – Version 2.6.1 für iPhone/iPad (Web-App)
+AP2 FISI Lerntrainer – Version 2.6.7 für iPhone/iPad (Web-App)
 =========================================================
 
 Die Web-App muss einmal im Internet bereitgestellt werden (kostenlos), danach
@@ -38,7 +38,50 @@ installiert man sie auf dem iPhone über Safari wie eine App.
    - Quiz-Battle funktioniert zwischen iPhone und Android gemischt.
    - Vibration gibt es auf dem iPhone nicht (Apple erlaubt das Web-Apps nicht).
 
-4) Neu in Version 2.6.1
+4) Neu in Version 2.6.7
+   - Quiz-Battle: Als Beispiel im Namensfeld steht ein zufälliger Name.
+
+5) Neu in Version 2.6.6
+   - Üben hat drei Schwierigkeitsstufen: "Normal" (4 Antworten),
+     "Verdeckt" (erst im Kopf beantworten, dann aufdecken) und
+     "Eintippen" (kurze Antworten selbst eintippen, bei 120 Fragen;
+     die übrigen sind verdeckt). Kleine Tippfehler sind egal, und mit
+     "Ich hatte es richtig" kannst du anders formulierte Antworten werten.
+   - WiSo-Quiz: Die richtige Antwort ist nicht mehr an ihrer Länge zu
+     erkennen (37 Fragen mit neuen, gleich langen Ablenkern).
+
+6) Neu in Version 2.6.5
+   - Datenschutz-Hinweis beim ersten Start (keine Cookies, kein Tracking,
+     Lernstand nur auf dem Gerät) und unter Mehr → Einstellungen →
+     Datenschutz die Details sowie "Alle Daten löschen".
+   - Quiz-Battle läuft von selbst weiter: Frage → Auflösung → nächste
+     Frage. Die Dauer der Auflösung ist einstellbar (5, 8, 12 oder 20 s).
+     Der Host kann jederzeit pausieren oder sofort weiterschalten.
+     Damit alle die Pause sehen, sollten alle Mitspieler 2.6.5 haben.
+
+7) Neu in Version 2.6.4
+   - WiSo-Karte und Quizfragen zur JAV korrigiert: Seit Juni 2021 vertritt
+     die JAV alle Auszubildenden, egal wie alt (vorher nur unter 25).
+   - Zwei Prüfungsaufgaben mit veralteter IHK-Lösung haben jetzt einen
+     Hinweis zur aktuellen Rechtslage (Winter 2022/23 Nr. 14 und
+     Sommer 2021 Nr. 7).
+
+8) Neu in Version 2.6.3
+   - "Fällig" = alle Karten, die du noch nie beantwortet hast, plus die
+     Karten, deren Wiederholung heute dran ist. Bearbeitete Karten
+     verschwinden, bis ihre Wiederholung fällig ist.
+   - Richtige Antworten in Üben, Blitz und Quiz-Battle zählen jetzt auch
+     als bearbeitet (wie "Kann ich"), falsche wie "Nochmal".
+
+9) Neu in Version 2.6.2
+   - Richtig/Falsch-Zähler für jede Karte: auf der Swipe-Karte, im Feed,
+     in der Bibliothek (sortierbar nach "Häufig falsch"), unter Markiert,
+     in der Kartenansicht, beim Üben und als Summe auf der Startseite.
+     Gezählt wird ab diesem Update.
+   - WiSo-Training zeigt pro Prüfungsfrage, wie oft du sie richtig und
+     falsch beantwortet hast.
+
+10) Neu in Version 2.6.1
    - Quiz-Battle: bis zu 100 Fragen oder "Alle"; die Anzahl wird gemerkt.
    - Thema "8 · WiSo" in Üben, Blitz und Quiz-Battle zeigt jetzt nur
      WiSo-Fragen (120 neue Multiple-Choice-Fragen zu den WiSo-Karten).
